@@ -1,4 +1,4 @@
-.PHONY: help build run test clean migrate-up migrate-down migrate-status docker-build docker-run docker-compose-up docker-compose-down swagger up
+.PHONY: help build run test clean migrate-up migrate-down migrate-status docker-build docker-run docker-compose-up docker-compose-down swagger templ-generate up
 
 # Default target
 help: ## Show this help message
@@ -16,6 +16,11 @@ build: ## Build the application
 swagger: ## Generate swagger documentation
 	@echo "Generating swagger documentation..."
 	swag init -g cmd/api/main.go
+
+# Generate templ templates
+templ-generate: ## Generate templ templates
+	@echo "Generating templ templates..."
+	templ generate
 
 # Run the application
 run: ## Run the application
@@ -89,16 +94,19 @@ docker-compose-logs: ## View docker-compose logs
 	docker-compose logs -f
 
 # Complete development setup and start all services
-up: ## Generate swagger, prepare everything, and start all services with docker-compose
+up: ## Generate templates, swagger, prepare everything, and start all services with docker-compose
 	@echo "Preparing application for deployment..."
 	@echo "1. Tidying Go modules..."
 	go mod tidy
-	@echo "2. Generating swagger documentation..."
+	@echo "2. Generating templ templates..."
+	templ generate
+	@echo "3. Generating swagger documentation..."
 	swag init -g cmd/api/main.go
-	@echo "3. Starting all services with docker-compose..."
+	@echo "4. Starting all services with docker-compose..."
 	docker compose up --build -d
 	@echo "✅ All services started successfully!"
 	@echo "📖 API documentation: http://localhost:8080/swagger/index.html"
+	@echo "🌐 Frontend: http://localhost:8080/"
 	@echo "🏥 Health check: http://localhost:8080/health"
 	@echo "📊 View logs: make docker-compose-logs"
 

@@ -29,7 +29,10 @@ Built using Clean Architecture principles:
 │   ├── domain/           # Core business logic
 │   ├── application/      # Use cases and services
 │   ├── infrastructure/   # External concerns
-│   └── presentation/     # HTTP handlers
+│   └── presentation/     # HTTP handlers & templates
+│       ├── handlers/     # HTTP request handlers
+│       ├── routes/       # Route definitions
+│       └── templates/    # Templ templates for frontend
 ├── pkg/                 # Shared utilities
 ├── migrations/          # Database migrations
 └── docs/               # API documentation
@@ -55,8 +58,9 @@ Database → Repository → Service → Handler → HTTP Response
 # Start all services
 make up
 
-# View API documentation
-open http://localhost:8080/swagger/index.html
+# Access the application
+open http://localhost:8080/                    # Frontend interface
+open http://localhost:8080/swagger/index.html  # API documentation
 ```
 
 ### Without Docker
@@ -84,6 +88,7 @@ make run                # Run locally
 make test               # Run tests
 make test-coverage      # Run tests with coverage
 make lint               # Check code quality
+make templ-generate     # Generate templ templates
 
 # Database
 make migrate-up         # Apply migrations
@@ -100,8 +105,18 @@ make docker-compose-down # Stop services
 make swagger            # Generate API docs
 ```
 
-## API Documentation
+## Access Points
 
-Once running, access the interactive API documentation at:
+Once running, you can access:
+
+### Frontend Interface
+**http://localhost:8080/**
+- Web-based interface for pack management
+- Order creation and management
+- Interactive package configuration
+
+### API Documentation
 **http://localhost:8080/swagger/index.html**
-
+- Interactive API documentation
+- Test API endpoints directly
+- View request/response schemas

@@ -30,7 +30,7 @@ func NewOrderService(orderRepo repository.OrderRepository, packRepo repository.P
 
 // OrderRequest represents a request to create an order
 type OrderRequest struct {
-	Amount int `json:"amount" binding:"required,min=1"`
+	Amount int `json:"amount" form:"amount" binding:"required,min=1"`
 }
 
 // OrderResponse represents the response with order details

@@ -1,0 +1,132 @@
+package templates
+
+import (
+	"github.com/Strahinja-Polovina/packs/internal/application/service"
+	"strconv"
+)
+
+templ OrderForm() {
+	<div class="bg-white rounded-lg shadow-md p-6 mb-8">
+		<h2 class="text-2xl font-semibold text-gray-800 mb-4">Create New Order</h2>
+
+		<form 
+			hx-post="/web/orders"
+			hx-target="#order-result"
+			hx-swap="innerHTML"
+			hx-trigger="submit"
+		>
+			<div class="mb-4">
+				<label for="amount" class="block text-sm font-medium text-gray-700 mb-2">Amount</label>
+				<input 
+					type="number" 
+					id="amount" 
+					name="amount" 
+					class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+					placeholder="Enter amount to pack"
+					required
+					min="1"
+				/>
+			</div>
+
+			<button 
+				type="submit"
+				class="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-md transition-colors"
+			>
+				Calculate & Create Order
+			</button>
+		</form>
+
+		<div id="order-result" class="mt-6"></div>
+	</div>
+}
+
+templ OrderResult(order service.OrderResponse) {
+	<div class="bg-green-50 border border-green-200 rounded-lg p-4">
+		<h3 class="text-lg font-semibold text-green-800 mb-3">Order Created Successfully!</h3>
+
+		<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+			<div>
+				<p class="text-sm text-gray-600">Order ID:</p>
+				<p class="font-medium">{ order.OrderID.String() }</p>
+			</div>
+			<div>
+				<p class="text-sm text-gray-600">Requested Amount:</p>
+				<p class="font-medium">{ strconv.Itoa(order.Amount) }</p>
+			</div>
+			<div>
+				<p class="text-sm text-gray-600">Total Packs:</p>
+				<p class="font-medium">{ strconv.Itoa(order.TotalPacks) }</p>
+			</div>
+			<div>
+				<p class="text-sm text-gray-600">Total Amount:</p>
+				<p class="font-medium">{ strconv.Itoa(order.TotalAmount) }</p>
+			</div>
+		</div>
+
+		<div class="mb-4">
+			<h4 class="text-md font-semibold text-gray-800 mb-2">Pack Combination:</h4>
+			<div class="space-y-2">
+				for packSize, quantity := range order.Combination {
+					<div class="flex justify-between items-center bg-white p-2 rounded border">
+						<span>Pack Size: { strconv.Itoa(packSize) }</span>
+						<span class="font-medium">Quantity: { strconv.Itoa(quantity) }</span>
+					</div>
+				}
+			</div>
+		</div>
+	</div>
+}
+
+templ OrdersList(orders []service.OrderResponse) {
+	<div class="bg-white rounded-lg shadow-md p-6">
+		<h2 class="text-2xl font-semibold text-gray-800 mb-4">All Orders</h2>
+
+		<!-- Hidden refresh button for automatic triggering -->
+		<button 
+			id="refresh-orders-btn"
+			style="display: none;"
+			hx-get="/web/orders"
+			hx-target="#orders-list"
+			hx-swap="innerHTML"
+			hx-trigger="htmx:afterRequest from:form[hx-post='/web/orders']"
+		></button>
+
+		<div id="orders-list">
+			if len(orders) == 0 {
+				<p class="text-gray-500 text-center py-8">No orders found. Create your first order above!</p>
+			} else {
+				<div class="space-y-4">
+					for _, order := range orders {
+						@OrderCard(order)
+					}
+				</div>
+			}
+		</div>
+	</div>
+}
+
+templ OrderCard(order service.OrderResponse) {
+	<div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+		<div class="flex justify-between items-start mb-3">
+			<div>
+				<h3 class="text-lg font-semibold text-gray-800">Order { order.OrderID.String()[:8] }...</h3>
+				<p class="text-sm text-gray-600">Amount: { strconv.Itoa(order.Amount) } | Total Packs: { strconv.Itoa(order.TotalPacks) }</p>
+			</div>
+			<span class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded">
+				Total: { strconv.Itoa(order.TotalAmount) }
+			</span>
+		</div>
+
+		<div class="mb-3">
+			<h4 class="text-sm font-medium text-gray-700 mb-2">Pack Details:</h4>
+			<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+				for _, item := range order.Items {
+					<div class="bg-gray-50 p-2 rounded text-sm">
+						<div class="font-medium">Size: { strconv.Itoa(item.PackSize) }</div>
+						<div class="text-gray-600">Qty: { strconv.Itoa(item.Quantity) } | Amount: { strconv.Itoa(item.Amount) }</div>
+					</div>
+				}
+			</div>
+		</div>
+	</div>
+}

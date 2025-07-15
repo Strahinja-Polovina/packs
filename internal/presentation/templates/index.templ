@@ -1,0 +1,21 @@
+package templates
+
+import (
+	"github.com/Strahinja-Polovina/packs/internal/domain/entity"
+	"github.com/Strahinja-Polovina/packs/internal/application/service"
+)
+
+templ Index(packs []entity.Pack, orders []service.OrderResponse) {
+	@Layout("Pack Management System") {
+		<div class="space-y-8">
+			<!-- Package Management Section -->
+			@PackageList(packs)
+			
+			<!-- Order Creation Section -->
+			@OrderForm()
+			
+			<!-- Orders List Section -->
+			@OrdersList(orders)
+		</div>
+	}
+}
