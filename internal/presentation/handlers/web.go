@@ -40,7 +40,14 @@ func (h *WebHandler) Index(c *gin.Context) {
 	}
 
 	component := templates.Index(packs, orders)
-	component.Render(c.Request.Context(), c.Writer)
+	if err := component.Render(c.Request.Context(), c.Writer); err != nil {
+		h.logger.Error("Failed to render index template: %v", err)
+		c.JSON(http.StatusInternalServerError, ErrorResponse{
+			Error:   "Template rendering failed",
+			Message: err.Error(),
+		})
+		return
+	}
 }
 
 // GetPackageForm serves the package creation form
@@ -48,7 +55,14 @@ func (h *WebHandler) GetPackageForm(c *gin.Context) {
 	h.logger.Info("Serving package creation form")
 
 	component := templates.PackageForm(nil, false)
-	component.Render(c.Request.Context(), c.Writer)
+	if err := component.Render(c.Request.Context(), c.Writer); err != nil {
+		h.logger.Error("Failed to render package form template: %v", err)
+		c.JSON(http.StatusInternalServerError, ErrorResponse{
+			Error:   "Template rendering failed",
+			Message: err.Error(),
+		})
+		return
+	}
 }
 
 // GetPackageEditForm serves the package edit form
@@ -67,7 +81,14 @@ func (h *WebHandler) GetPackageEditForm(c *gin.Context) {
 	}
 
 	component := templates.PackageForm(pack, true)
-	component.Render(c.Request.Context(), c.Writer)
+	if err := component.Render(c.Request.Context(), c.Writer); err != nil {
+		h.logger.Error("Failed to render package edit form template: %v", err)
+		c.JSON(http.StatusInternalServerError, ErrorResponse{
+			Error:   "Template rendering failed",
+			Message: err.Error(),
+		})
+		return
+	}
 }
 
 // GetPackagesTableBody serves the packages table body for HTMX updates
@@ -79,7 +100,10 @@ func (h *WebHandler) GetPackagesTableBody(c *gin.Context) {
 	c.Header("Content-Type", "text/html")
 	for _, pack := range packs {
 		component := templates.PackageRow(pack)
-		component.Render(c.Request.Context(), c.Writer)
+		if err := component.Render(c.Request.Context(), c.Writer); err != nil {
+			h.logger.Error("Failed to render package row template: %v", err)
+			continue
+		}
 	}
 }
 
@@ -96,7 +120,10 @@ func (h *WebHandler) GetOrdersList(c *gin.Context) {
 	c.Header("Content-Type", "text/html")
 	for _, order := range orders {
 		component := templates.OrderCard(order)
-		component.Render(c.Request.Context(), c.Writer)
+		if err := component.Render(c.Request.Context(), c.Writer); err != nil {
+			h.logger.Error("Failed to render order card template: %v", err)
+			continue
+		}
 	}
 }
 
@@ -127,7 +154,14 @@ func (h *WebHandler) HandleOrderCreation(c *gin.Context) {
 	h.logger.Info("Order created successfully with ID: %s", result.OrderID)
 
 	component := templates.OrderResult(*result)
-	component.Render(c.Request.Context(), c.Writer)
+	if err := component.Render(c.Request.Context(), c.Writer); err != nil {
+		h.logger.Error("Failed to render order result template: %v", err)
+		c.JSON(http.StatusInternalServerError, ErrorResponse{
+			Error:   "Template rendering failed",
+			Message: err.Error(),
+		})
+		return
+	}
 }
 
 // HandlePackageCreation handles package creation and returns updated table

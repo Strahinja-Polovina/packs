@@ -54,6 +54,11 @@ func (r *packPostgres) List(ctx context.Context) []entity.Pack {
 			continue
 		}
 
+		// Set timestamps from database if they exist
+		if createdAt.Valid && updatedAt.Valid {
+			pack.SetTimestamps(createdAt.Time, updatedAt.Time)
+		}
+
 		packs = append(packs, *pack)
 	}
 
@@ -82,6 +87,11 @@ func (r *packPostgres) Get(ctx context.Context, id uuid.UUID) (*entity.Pack, err
 	pack, err := entity.NewPack(packID, size)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create pack entity: %w", err)
+	}
+
+	// Set timestamps from database if they exist
+	if createdAt.Valid && updatedAt.Valid {
+		pack.SetTimestamps(createdAt.Time, updatedAt.Time)
 	}
 
 	return pack, nil

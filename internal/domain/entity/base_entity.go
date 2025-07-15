@@ -36,3 +36,9 @@ func (b *BaseEntity) UpdatedAt() time.Time {
 func (b *BaseEntity) Update() {
 	b.updatedAt = time.Now()
 }
+
+// SetTimestamps sets the created and updated timestamps from database values
+func (b *BaseEntity) SetTimestamps(createdAt, updatedAt time.Time) {
+	b.createdAt = createdAt
+	b.updatedAt = updatedAt
+}

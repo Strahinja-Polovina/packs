@@ -53,6 +53,11 @@ func (r *orderPostgres) List(ctx context.Context) []entity.Order {
 
 		order := entity.NewOrder(id)
 
+		// Set timestamps from database if they exist
+		if createdAt.Valid && updatedAt.Valid {
+			order.SetTimestamps(createdAt.Time, updatedAt.Time)
+		}
+
 		if err := r.loadOrderItems(ctx, order); err != nil {
 			r.logger.Warn("Failed to load items for order %s: %v", id, err)
 			continue
@@ -85,6 +90,11 @@ func (r *orderPostgres) Get(ctx context.Context, id uuid.UUID) (*entity.Order, e
 	}
 
 	order := entity.NewOrder(orderID)
+
+	// Set timestamps from database if they exist
+	if createdAt.Valid && updatedAt.Valid {
+		order.SetTimestamps(createdAt.Time, updatedAt.Time)
+	}
 
 	if err := r.loadOrderItems(ctx, order); err != nil {
 		r.logger.Error("Failed to load order items for order %s: %v", id, err)

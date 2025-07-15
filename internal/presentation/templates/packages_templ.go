@@ -193,7 +193,7 @@ func PackageForm(pack *entity.Pack, isEdit bool) templ.Component {
 			templ_7745c5c3_Var10 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "<div class=\"fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50\" id=\"package-modal\"><div class=\"relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white\"><div class=\"mt-3\"><div class=\"flex justify-between items-center mb-4\"><h3 class=\"text-lg font-medium text-gray-900\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "<div class=\"fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50\" id=\"package-modal\" onclick=\"document.getElementById('package-modal').remove()\"><div class=\"relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white\" onclick=\"event.stopPropagation()\"><div class=\"mt-3\"><div class=\"flex justify-between items-center mb-4\"><h3 class=\"text-lg font-medium text-gray-900\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -208,7 +208,7 @@ func PackageForm(pack *entity.Pack, isEdit bool) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "</h3><button class=\"text-gray-400 hover:text-gray-600\" onclick=\"document.getElementById('package-modal').remove()\"><svg class=\"w-6 h-6\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M6 18L18 6M6 6l12 12\"></path></svg></button></div><!-- Hidden button to close modal after successful submission --><button id=\"close-modal-btn\" style=\"display: none;\" onclick=\"document.getElementById('package-modal').remove()\"></button><!-- Hidden trigger button for auto-close --><button style=\"display: none;\" hx-trigger=\"htmx:afterRequest from:form\" hx-get=\"#\" hx-swap=\"none\" onclick=\"document.getElementById('close-modal-btn').click()\"></button><form")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "</h3><button class=\"text-gray-400 hover:text-gray-600\" onclick=\"document.getElementById('package-modal').remove()\"><svg class=\"w-6 h-6\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M6 18L18 6M6 6l12 12\"></path></svg></button></div><!-- Error message container --><div id=\"error-message\" class=\"mb-4 hidden\"><div class=\"bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded\"><span id=\"error-text\"></span></div></div><form")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -220,7 +220,7 @@ func PackageForm(pack *entity.Pack, isEdit bool) templ.Component {
 			var templ_7745c5c3_Var11 string
 			templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs("/web/packages/" + pack.ID().String())
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/presentation/templates/packages.templ`, Line: 113, Col: 52}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/presentation/templates/packages.templ`, Line: 104, Col: 52}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 			if templ_7745c5c3_Err != nil {
@@ -236,7 +236,7 @@ func PackageForm(pack *entity.Pack, isEdit bool) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, " hx-target=\"#packages-table-body\" hx-swap=\"innerHTML\"><div class=\"mb-4\"><label for=\"size\" class=\"block text-sm font-medium text-gray-700 mb-2\">Package Size</label> <input type=\"number\" id=\"size\" name=\"size\" class=\"w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, " hx-target=\"#packages-table-body\" hx-swap=\"innerHTML\" hx-on::after-request=\"\n\t\t\t\t\t\tif(event.detail.successful) {\n\t\t\t\t\t\t\tdocument.getElementById('package-modal').remove()\n\t\t\t\t\t\t} else {\n\t\t\t\t\t\t\tconst errorDiv = document.getElementById('error-message');\n\t\t\t\t\t\t\tconst errorText = document.getElementById('error-text');\n\t\t\t\t\t\t\tlet message = 'An error occurred while processing your request.';\n\t\t\t\t\t\t\ttry {\n\t\t\t\t\t\t\t\tconst response = JSON.parse(event.detail.xhr.responseText);\n\t\t\t\t\t\t\t\tmessage = response.message || response.error || message;\n\t\t\t\t\t\t\t} catch {\n\t\t\t\t\t\t\t\tmessage = event.detail.xhr.responseText || message;\n\t\t\t\t\t\t\t}\n\t\t\t\t\t\t\terrorText.textContent = message;\n\t\t\t\t\t\t\terrorDiv.classList.remove('hidden');\n\t\t\t\t\t\t}\n\t\t\t\t\t\"><div class=\"mb-4\"><label for=\"size\" class=\"block text-sm font-medium text-gray-700 mb-2\">Package Size</label> <input type=\"number\" id=\"size\" name=\"size\" class=\"w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -248,7 +248,7 @@ func PackageForm(pack *entity.Pack, isEdit bool) templ.Component {
 			var templ_7745c5c3_Var12 string
 			templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(pack.Size()))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/presentation/templates/packages.templ`, Line: 128, Col: 41}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/presentation/templates/packages.templ`, Line: 136, Col: 41}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 			if templ_7745c5c3_Err != nil {
