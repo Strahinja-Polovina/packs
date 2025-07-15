@@ -1,0 +1,266 @@
+basePath: /
+definitions:
+  handlers.CreatePackSizeRequest:
+    properties:
+      size:
+        minimum: 1
+        type: integer
+    required:
+    - size
+    type: object
+  handlers.ErrorResponse:
+    properties:
+      error:
+        type: string
+      message:
+        type: string
+    type: object
+  handlers.PackResponse:
+    properties:
+      id:
+        type: string
+      size:
+        type: integer
+    type: object
+  handlers.PackSizesResponse:
+    properties:
+      count:
+        type: integer
+      packs:
+        items:
+          $ref: '#/definitions/handlers.PackResponse'
+        type: array
+    type: object
+  handlers.UpdatePackSizeRequest:
+    properties:
+      size:
+        minimum: 1
+        type: integer
+    required:
+    - size
+    type: object
+  service.OrderItemResponse:
+    properties:
+      amount:
+        type: integer
+      pack_id:
+        type: string
+      pack_size:
+        type: integer
+      quantity:
+        type: integer
+    type: object
+  service.OrderRequest:
+    properties:
+      amount:
+        minimum: 1
+        type: integer
+    required:
+    - amount
+    type: object
+  service.OrderResponse:
+    properties:
+      amount:
+        type: integer
+      combination:
+        additionalProperties:
+          type: integer
+        type: object
+      items:
+        items:
+          $ref: '#/definitions/service.OrderItemResponse'
+        type: array
+      order_id:
+        type: string
+      pack_sizes:
+        items:
+          type: integer
+        type: array
+      total_amount:
+        type: integer
+      total_packs:
+        type: integer
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: A pack calculation and order management API
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Packs API
+  version: "1.0"
+paths:
+  /api/v1/orders:
+    get:
+      description: Retrieve all orders from the system
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/service.OrderResponse'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Get all orders
+      tags:
+      - orders
+    post:
+      consumes:
+      - application/json
+      description: Create a new order from pack calculation
+      parameters:
+      - description: Order creation request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/service.OrderRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/service.OrderResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Create a new order
+      tags:
+      - orders
+  /api/v1/pack-sizes:
+    get:
+      description: Get all available pack sizes from the system
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.PackSizesResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Get available pack sizes
+      tags:
+      - packs
+    post:
+      consumes:
+      - application/json
+      description: Add a new pack size to the system
+      parameters:
+      - description: Pack size creation request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.CreatePackSizeRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/handlers.PackResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Create a new pack size
+      tags:
+      - packs
+  /api/v1/pack-sizes/{id}:
+    delete:
+      description: Remove a pack size from the system
+      parameters:
+      - description: Pack ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Delete a pack size
+      tags:
+      - packs
+    put:
+      consumes:
+      - application/json
+      description: Update an existing pack size
+      parameters:
+      - description: Pack ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Pack size update request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.UpdatePackSizeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.PackResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Update a pack size
+      tags:
+      - packs
+schemes:
+- http
+- https
+swagger: "2.0"
