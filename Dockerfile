@@ -20,14 +20,14 @@ RUN go install github.com/swaggo/swag/cmd/swag@latest
 # Copy source code
 COPY . .
 
-# Ensure go.mod is up to date
-RUN go mod tidy
-
 # Generate templates
 RUN templ generate
 
 # Generate swagger documentation (with comprehensive fallback)
 RUN swag init -g cmd/api/main.go
+
+# Ensure go.mod is up to date (after docs are generated)
+RUN go mod tidy
 
 
 # Build the application

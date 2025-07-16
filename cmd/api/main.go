@@ -24,7 +24,6 @@ import (
 	"syscall"
 	"time"
 
-	_ "github.com/Strahinja-Polovina/packs/docs"
 	"github.com/Strahinja-Polovina/packs/internal/infrastructure/database"
 	"github.com/Strahinja-Polovina/packs/internal/infrastructure/repository"
 	"github.com/Strahinja-Polovina/packs/internal/presentation/routes"

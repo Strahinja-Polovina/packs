@@ -1,6 +1,7 @@
 package routes
 
 import (
+	_ "github.com/Strahinja-Polovina/packs/docs"
 	"github.com/Strahinja-Polovina/packs/internal/application/service"
 	"github.com/Strahinja-Polovina/packs/internal/domain/repository"
 	"github.com/Strahinja-Polovina/packs/internal/presentation/handlers"
