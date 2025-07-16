@@ -20,11 +20,14 @@ RUN go install github.com/swaggo/swag/cmd/swag@latest
 # Copy source code
 COPY . .
 
+# Ensure go.mod is up to date
+RUN go mod tidy
+
 # Generate templates
 RUN templ generate
 
 # Generate swagger documentation
-RUN swag init -g cmd/api/main.go
+RUN swag init -g cmd/api/main.go --dir ./ --parseDependency --parseInternal
 
 # Build the application
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main ./cmd/api
