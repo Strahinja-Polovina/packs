@@ -51,6 +51,7 @@ services:
       - DB_PASSWORD=postgres
       - DB_NAME=packs_db
       - DB_SSL_MODE=disable
+      - ENABLE_SWAGGER=true
     depends_on:
       postgres:
         condition: service_healthy

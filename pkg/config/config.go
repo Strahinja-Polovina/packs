@@ -31,8 +31,9 @@ type DatabaseConfig struct {
 
 // AppConfig holds application-specific configuration
 type AppConfig struct {
-	LogLevel string
-	Version  string
+	LogLevel      string
+	Version       string
+	EnableSwagger bool
 }
 
 // Load loads configuration from environment variables with defaults
@@ -52,8 +53,9 @@ func Load() *Config {
 			SSLMode:  getEnv("DB_SSL_MODE", "disable"),
 		},
 		App: AppConfig{
-			LogLevel: getEnv("LOG_LEVEL", "INFO"),
-			Version:  getEnv("APP_VERSION", "1.0.0"),
+			LogLevel:      getEnv("LOG_LEVEL", "INFO"),
+			Version:       getEnv("APP_VERSION", "1.0.0"),
+			EnableSwagger: getEnvAsBool("ENABLE_SWAGGER", true),
 		},
 	}
 }
@@ -77,6 +79,16 @@ func getEnvAsInt(key string, defaultValue int) int {
 	if value := os.Getenv(key); value != "" {
 		if intValue, err := strconv.Atoi(value); err == nil {
 			return intValue
+		}
+	}
+	return defaultValue
+}
+
+// getEnvAsBool gets an environment variable as boolean with a default value
+func getEnvAsBool(key string, defaultValue bool) bool {
+	if value := os.Getenv(key); value != "" {
+		if boolValue, err := strconv.ParseBool(value); err == nil {
+			return boolValue
 		}
 	}
 	return defaultValue

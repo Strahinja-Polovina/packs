@@ -64,11 +64,12 @@ func main() {
 
 	// Setup routes
 	routeConfig := routes.RouteConfig{
-		ServiceName: cfg.Server.Name,
-		Port:        cfg.Server.Port,
-		PackRepo:    packRepo,
-		OrderRepo:   orderRepo,
-		Logger:      logger.GetLogger(),
+		ServiceName:   cfg.Server.Name,
+		Port:          cfg.Server.Port,
+		PackRepo:      packRepo,
+		OrderRepo:     orderRepo,
+		Logger:        logger.GetLogger(),
+		EnableSwagger: cfg.App.EnableSwagger,
 	}
 
 	srv.SetupRoutes(func(router *gin.Engine) {

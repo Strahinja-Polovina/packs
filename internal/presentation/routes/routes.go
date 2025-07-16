@@ -12,11 +12,12 @@ import (
 )
 
 type RouteConfig struct {
-	ServiceName string
-	Port        int
-	PackRepo    repository.PackRepository
-	OrderRepo   repository.OrderRepository
-	Logger      *logger.Logger
+	ServiceName   string
+	Port          int
+	PackRepo      repository.PackRepository
+	OrderRepo     repository.OrderRepository
+	Logger        *logger.Logger
+	EnableSwagger bool
 }
 
 func SetupRoutes(router *gin.Engine, config RouteConfig) {
@@ -31,8 +32,10 @@ func SetupRoutes(router *gin.Engine, config RouteConfig) {
 	orderHandler := handlers.NewOrderHandler(orderService, config.Logger)
 	webHandler := handlers.NewWebHandler(packService, orderService, config.Logger)
 
-	// Swagger documentation
-	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	// Swagger documentation (only in development/debug mode)
+	if config.EnableSwagger {
+		router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	}
 
 	// Health check route
 	router.GET("/health", healthHandler.Health)
