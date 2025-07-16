@@ -22,7 +22,6 @@ go.work
 bin/
 build/
 dist/
-api
 
 # Environment files
 .env
