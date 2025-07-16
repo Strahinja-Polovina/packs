@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Strahinja-Polovina/packs/internal/presentation/middleware"
 	"github.com/Strahinja-Polovina/packs/pkg/logger"
 )
 
@@ -44,6 +45,7 @@ func New(config Config) *Server {
 	// Create gin router
 	router := gin.New()
 	router.Use(gin.Recovery())
+	router.Use(middleware.CORSAllowAll())
 
 	server := &Server{
 		name:   config.Name,
