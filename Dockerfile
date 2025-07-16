@@ -27,12 +27,8 @@ RUN go mod tidy
 RUN templ generate
 
 # Generate swagger documentation (with comprehensive fallback)
-RUN mkdir -p docs && \
-    { swag init -g ./cmd/api/main.go --output ./docs --parseDependency --parseInternal || \
-      swag init -g ./cmd/api/main.go --output ./docs || \
-      { echo "package docs" > docs/docs.go && \
-        echo "// This is a fallback docs file generated when swag failed" >> docs/docs.go && \
-        echo "const SwaggerInfo = \`{\"swagger\":\"2.0\",\"info\":{\"title\":\"Packs API\",\"version\":\"1.0\"}}\`" >> docs/docs.go; }; }
+RUN swag init -g cmd/api/main.go
+
 
 # Build the application
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main ./cmd/api
