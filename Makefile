@@ -1,4 +1,4 @@
-.PHONY: help build run test clean migrate-up migrate-down migrate-status docker-build docker-run docker-compose-up docker-compose-down swagger templ-generate up install-deps install-dev-deps
+.PHONY: help build run dev test clean migrate-up migrate-down migrate-status docker-build docker-run docker-compose-up docker-compose-down swagger templ-generate up install-deps install-dev-deps
 
 # Default target
 help: ## Show this help message
@@ -13,14 +13,30 @@ build: ## Build the application
 	go build -o bin/packs cmd/api/main.go
 
 # Generate swagger documentation
-swagger: ## Generate swagger documentation
+swagger: ## Generate swagger documentation (requires swag to be installed)
 	@echo "Generating swagger documentation..."
+	@if ! command -v swag > /dev/null; then \
+		echo "swag not found. Installing..."; \
+		go install github.com/swaggo/swag/cmd/swag@latest; \
+	fi
 	swag init -g cmd/api/main.go
 
 # Generate templ templates
-templ-generate: ## Generate templ templates
+templ-generate: ## Generate templ templates (requires templ to be installed)
 	@echo "Generating templ templates..."
+	@if ! command -v templ > /dev/null; then \
+		echo "templ not found. Installing..."; \
+		go install github.com/a-h/templ/cmd/templ@latest; \
+	fi
 	templ generate
+
+# Local development setup and run
+dev: ## Generate templates and swagger locally, then run the application
+	@echo "Setting up for local development..."
+	@$(MAKE) templ-generate
+	@$(MAKE) swagger
+	@echo "Running application..."
+	go run cmd/api/main.go
 
 # Run the application
 run: ## Run the application
@@ -94,17 +110,10 @@ docker-compose-logs: ## View docker-compose logs
 	docker-compose logs -f
 
 # Complete development setup and start all services
-up: ## Install dependencies, generate templates, swagger, prepare everything, and start all services with docker-compose
-	@echo "Preparing application for deployment..."
-	@echo "1. Installing dependencies..."
-	@$(MAKE) install-deps
-	@echo "2. Tidying Go modules..."
-	go mod tidy
-	@echo "3. Generating templ templates..."
-	templ generate
-	@echo "4. Generating swagger documentation..."
-	swag init -g cmd/api/main.go
-	@echo "5. Starting all services with docker-compose..."
+up: ## Start all services with docker-compose (templates and swagger generated in Docker)
+	@echo "Starting application with docker-compose..."
+	@echo "Building and starting all services..."
+	@echo "(Templates and swagger docs will be generated during Docker build)"
 	docker compose up --build -d
 	@echo "✅ All services started successfully!"
 	@echo "📖 API documentation: http://localhost:8080/swagger/index.html"

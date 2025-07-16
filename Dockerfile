@@ -13,8 +13,18 @@ COPY go.mod go.sum ./
 # Download dependencies
 RUN go mod download
 
+# Install build tools
+RUN go install github.com/a-h/templ/cmd/templ@latest
+RUN go install github.com/swaggo/swag/cmd/swag@latest
+
 # Copy source code
 COPY . .
+
+# Generate templates
+RUN templ generate
+
+# Generate swagger documentation
+RUN swag init -g cmd/api/main.go
 
 # Build the application
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main ./cmd/api
