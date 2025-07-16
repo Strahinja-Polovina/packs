@@ -10,8 +10,8 @@ type Order struct {
 }
 
 type OrderItem struct {
-	pack     *Pack
-	quantity int
+	packageSize int
+	quantity    int
 }
 
 // NewOrder creates a new order with the given ID
@@ -22,9 +22,9 @@ func NewOrder(id uuid.UUID) *Order {
 	}
 }
 
-// AddItem adds a pack with quantity to the order
-func (o *Order) AddItem(pack *Pack, quantity int) error {
-	if pack == nil {
+// AddItem adds a package size with quantity to the order
+func (o *Order) AddItem(packageSize, quantity int) error {
+	if packageSize <= 0 {
 		return ErrPackSize
 	}
 	if quantity <= 0 {
@@ -32,7 +32,7 @@ func (o *Order) AddItem(pack *Pack, quantity int) error {
 	}
 
 	for i, item := range o.items {
-		if item.pack.ID() == pack.ID() {
+		if item.packageSize == packageSize {
 			o.items[i].quantity += quantity
 			o.Update()
 			return nil
@@ -40,17 +40,17 @@ func (o *Order) AddItem(pack *Pack, quantity int) error {
 	}
 
 	o.items = append(o.items, OrderItem{
-		pack:     pack,
-		quantity: quantity,
+		packageSize: packageSize,
+		quantity:    quantity,
 	})
 	o.Update()
 	return nil
 }
 
-// RemoveItem removes a pack from the order
-func (o *Order) RemoveItem(packID uuid.UUID) error {
+// RemoveItem removes a package size from the order
+func (o *Order) RemoveItem(packageSize int) error {
 	for i, item := range o.items {
-		if item.pack.ID() == packID {
+		if item.packageSize == packageSize {
 			o.items = append(o.items[:i], o.items[i+1:]...)
 			o.Update()
 			return nil
@@ -59,14 +59,14 @@ func (o *Order) RemoveItem(packID uuid.UUID) error {
 	return ErrOrderNotFound
 }
 
-// UpdateItemQuantity updates the quantity of a specific pack in the order
-func (o *Order) UpdateItemQuantity(packID uuid.UUID, quantity int) error {
+// UpdateItemQuantity updates the quantity of a specific package size in the order
+func (o *Order) UpdateItemQuantity(packageSize, quantity int) error {
 	if quantity <= 0 {
 		return ErrInvalidQuantity
 	}
 
 	for i, item := range o.items {
-		if item.pack.ID() == packID {
+		if item.packageSize == packageSize {
 			o.items[i].quantity = quantity
 			o.Update()
 			return nil
@@ -86,7 +86,7 @@ func (o *Order) GetItems() []OrderItem {
 func (o *Order) GetTotalAmount() int {
 	total := 0
 	for _, item := range o.items {
-		total += item.pack.Size() * item.quantity
+		total += item.packageSize * item.quantity
 	}
 	return total
 }
@@ -103,8 +103,8 @@ func (o *Order) Clear() {
 }
 
 // NewOrderItem creates a new order item
-func NewOrderItem(pack *Pack, quantity int) (*OrderItem, error) {
-	if pack == nil {
+func NewOrderItem(packageSize, quantity int) (*OrderItem, error) {
+	if packageSize <= 0 {
 		return nil, ErrPackSize
 	}
 	if quantity <= 0 {
@@ -112,14 +112,14 @@ func NewOrderItem(pack *Pack, quantity int) (*OrderItem, error) {
 	}
 
 	return &OrderItem{
-		pack:     pack,
-		quantity: quantity,
+		packageSize: packageSize,
+		quantity:    quantity,
 	}, nil
 }
 
-// Pack returns the pack associated with this order item
-func (oi *OrderItem) Pack() *Pack {
-	return oi.pack
+// PackageSize returns the package size for this order item
+func (oi *OrderItem) PackageSize() int {
+	return oi.packageSize
 }
 
 // Quantity returns the quantity of this order item
@@ -138,5 +138,5 @@ func (oi *OrderItem) SetQuantity(quantity int) error {
 
 // GetAmount returns the total amount for this order item
 func (oi *OrderItem) GetAmount() int {
-	return oi.pack.Size() * oi.quantity
+	return oi.packageSize * oi.quantity
 }

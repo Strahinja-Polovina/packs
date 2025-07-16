@@ -44,44 +44,51 @@ func TestNewOrder(t *testing.T) {
 
 func TestOrder_AddItem(t *testing.T) {
 	order := NewOrder(uuid.New())
-	pack, _ := NewPack(uuid.New(), 250)
+	packageSize := 250
 
 	tests := []struct {
 		name        string
-		pack        *Pack
+		packageSize int
 		quantity    int
 		expectError bool
 		expectedErr error
 	}{
 		{
 			name:        "Valid item addition",
-			pack:        pack,
+			packageSize: packageSize,
 			quantity:    2,
 			expectError: false,
 		},
 		{
 			name:        "Valid item with quantity 1",
-			pack:        pack,
+			packageSize: packageSize,
 			quantity:    1,
 			expectError: false,
 		},
 		{
-			name:        "Invalid item with nil pack",
-			pack:        nil,
+			name:        "Invalid item with zero package size",
+			packageSize: 0,
+			quantity:    1,
+			expectError: true,
+			expectedErr: ErrPackSize,
+		},
+		{
+			name:        "Invalid item with negative package size",
+			packageSize: -250,
 			quantity:    1,
 			expectError: true,
 			expectedErr: ErrPackSize,
 		},
 		{
 			name:        "Invalid item with zero quantity",
-			pack:        pack,
+			packageSize: packageSize,
 			quantity:    0,
 			expectError: true,
 			expectedErr: ErrInvalidQuantity,
 		},
 		{
 			name:        "Invalid item with negative quantity",
-			pack:        pack,
+			packageSize: packageSize,
 			quantity:    -1,
 			expectError: true,
 			expectedErr: ErrInvalidQuantity,
@@ -92,7 +99,7 @@ func TestOrder_AddItem(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			order = NewOrder(uuid.New())
 
-			err := order.AddItem(tt.pack, tt.quantity)
+			err := order.AddItem(tt.packageSize, tt.quantity)
 
 			if tt.expectError {
 				if err == nil {
@@ -123,8 +130,8 @@ func TestOrder_AddItem(t *testing.T) {
 			}
 
 			if len(items) > 0 {
-				if items[0].Pack().ID() != tt.pack.ID() {
-					t.Errorf("Expected pack ID %s, got %s", tt.pack.ID(), items[0].Pack().ID())
+				if items[0].PackageSize() != tt.packageSize {
+					t.Errorf("Expected package size %d, got %d", tt.packageSize, items[0].PackageSize())
 				}
 				if items[0].Quantity() != tt.quantity {
 					t.Errorf("Expected quantity %d, got %d", tt.quantity, items[0].Quantity())
@@ -134,55 +141,55 @@ func TestOrder_AddItem(t *testing.T) {
 	}
 }
 
-func TestOrder_AddItem_DuplicatePack(t *testing.T) {
+func TestOrder_AddItem_DuplicatePackageSize(t *testing.T) {
 	order := NewOrder(uuid.New())
-	pack, _ := NewPack(uuid.New(), 250)
+	packageSize := 250
 
-	err := order.AddItem(pack, 2)
+	err := order.AddItem(packageSize, 2)
 	if err != nil {
 		t.Fatalf("Failed to add item first time: %v", err)
 	}
 
-	err = order.AddItem(pack, 3)
+	err = order.AddItem(packageSize, 3)
 	if err != nil {
 		t.Fatalf("Failed to add item second time: %v", err)
 	}
 
 	items := order.GetItems()
 	if len(items) != 1 {
-		t.Errorf("Expected 1 item in order after adding duplicate pack, got %d", len(items))
+		t.Errorf("Expected 1 item in order after adding duplicate package size, got %d", len(items))
 	}
 
 	if len(items) > 0 {
 		expectedQuantity := 5 // 2 + 3
 		if items[0].Quantity() != expectedQuantity {
-			t.Errorf("Expected quantity %d after adding duplicate pack, got %d", expectedQuantity, items[0].Quantity())
+			t.Errorf("Expected quantity %d after adding duplicate package size, got %d", expectedQuantity, items[0].Quantity())
 		}
 	}
 }
 
 func TestOrder_RemoveItem(t *testing.T) {
 	order := NewOrder(uuid.New())
-	pack1, _ := NewPack(uuid.New(), 250)
-	pack2, _ := NewPack(uuid.New(), 500)
+	packageSize1 := 250
+	packageSize2 := 500
 
-	_ = order.AddItem(pack1, 2)
-	_ = order.AddItem(pack2, 1)
+	_ = order.AddItem(packageSize1, 2)
+	_ = order.AddItem(packageSize2, 1)
 
 	tests := []struct {
 		name        string
-		packID      uuid.UUID
+		packageSize int
 		expectError bool
 		expectedErr error
 	}{
 		{
 			name:        "Remove existing item",
-			packID:      pack1.ID(),
+			packageSize: packageSize1,
 			expectError: false,
 		},
 		{
 			name:        "Remove non-existent item",
-			packID:      uuid.New(),
+			packageSize: 999,
 			expectError: true,
 			expectedErr: ErrOrderNotFound,
 		},
@@ -191,12 +198,12 @@ func TestOrder_RemoveItem(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			order = NewOrder(uuid.New())
-			_ = order.AddItem(pack1, 2)
-			_ = order.AddItem(pack2, 1)
+			_ = order.AddItem(packageSize1, 2)
+			_ = order.AddItem(packageSize2, 1)
 
 			originalItemCount := len(order.GetItems())
 
-			err := order.RemoveItem(tt.packID)
+			err := order.RemoveItem(tt.packageSize)
 
 			if tt.expectError {
 				if err == nil {
@@ -224,8 +231,8 @@ func TestOrder_RemoveItem(t *testing.T) {
 
 			items := order.GetItems()
 			for _, item := range items {
-				if item.Pack().ID() == tt.packID {
-					t.Errorf("Expected item with pack ID %s to be removed, but it still exists", tt.packID)
+				if item.PackageSize() == tt.packageSize {
+					t.Errorf("Expected item with package size %d to be removed, but it still exists", tt.packageSize)
 				}
 			}
 		})
@@ -234,39 +241,39 @@ func TestOrder_RemoveItem(t *testing.T) {
 
 func TestOrder_UpdateItemQuantity(t *testing.T) {
 	order := NewOrder(uuid.New())
-	pack, _ := NewPack(uuid.New(), 250)
-	_ = order.AddItem(pack, 2)
+	packageSize := 250
+	_ = order.AddItem(packageSize, 2)
 
 	tests := []struct {
 		name        string
-		packID      uuid.UUID
+		packageSize int
 		quantity    int
 		expectError bool
 		expectedErr error
 	}{
 		{
 			name:        "Valid quantity update",
-			packID:      pack.ID(),
+			packageSize: packageSize,
 			quantity:    5,
 			expectError: false,
 		},
 		{
 			name:        "Update non-existent item",
-			packID:      uuid.New(),
+			packageSize: 999,
 			quantity:    3,
 			expectError: true,
 			expectedErr: ErrOrderNotFound,
 		},
 		{
 			name:        "Invalid quantity - zero",
-			packID:      pack.ID(),
+			packageSize: packageSize,
 			quantity:    0,
 			expectError: true,
 			expectedErr: ErrInvalidQuantity,
 		},
 		{
 			name:        "Invalid quantity - negative",
-			packID:      pack.ID(),
+			packageSize: packageSize,
 			quantity:    -1,
 			expectError: true,
 			expectedErr: ErrInvalidQuantity,
@@ -276,9 +283,9 @@ func TestOrder_UpdateItemQuantity(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			order = NewOrder(uuid.New())
-			_ = order.AddItem(pack, 2)
+			_ = order.AddItem(packageSize, 2)
 
-			err := order.UpdateItemQuantity(tt.packID, tt.quantity)
+			err := order.UpdateItemQuantity(tt.packageSize, tt.quantity)
 
 			if tt.expectError {
 				if err == nil {
@@ -299,7 +306,7 @@ func TestOrder_UpdateItemQuantity(t *testing.T) {
 			items := order.GetItems()
 			found := false
 			for _, item := range items {
-				if item.Pack().ID() == tt.packID {
+				if item.PackageSize() == tt.packageSize {
 					found = true
 					if item.Quantity() != tt.quantity {
 						t.Errorf("Expected quantity %d, got %d", tt.quantity, item.Quantity())
@@ -309,7 +316,7 @@ func TestOrder_UpdateItemQuantity(t *testing.T) {
 			}
 
 			if !found {
-				t.Errorf("Expected to find item with pack ID %s", tt.packID)
+				t.Errorf("Expected to find item with package size %d", tt.packageSize)
 			}
 		})
 	}
@@ -317,16 +324,16 @@ func TestOrder_UpdateItemQuantity(t *testing.T) {
 
 func TestOrder_GetItems(t *testing.T) {
 	order := NewOrder(uuid.New())
-	pack1, _ := NewPack(uuid.New(), 250)
-	pack2, _ := NewPack(uuid.New(), 500)
+	packageSize1 := 250
+	packageSize2 := 500
 
 	items := order.GetItems()
 	if len(items) != 0 {
 		t.Errorf("Expected 0 items initially, got %d", len(items))
 	}
 
-	_ = order.AddItem(pack1, 2)
-	_ = order.AddItem(pack2, 1)
+	_ = order.AddItem(packageSize1, 2)
+	_ = order.AddItem(packageSize2, 1)
 
 	items = order.GetItems()
 	if len(items) != 2 {
@@ -349,15 +356,15 @@ func TestOrder_GetTotalAmount(t *testing.T) {
 		t.Errorf("Expected total amount to be 0 initially, got %d", order.GetTotalAmount())
 	}
 
-	pack1, _ := NewPack(uuid.New(), 250)
-	pack2, _ := NewPack(uuid.New(), 500)
+	packageSize1 := 250
+	packageSize2 := 500
 
-	err := order.AddItem(pack1, 2)
+	err := order.AddItem(packageSize1, 2)
 	require.NoError(t, err)
-	err = order.AddItem(pack2, 1)
+	err = order.AddItem(packageSize2, 1)
 	require.NoError(t, err)
 
-	expectedTotal := 1000
+	expectedTotal := 1000 // (250 * 2) + (500 * 1)
 	if order.GetTotalAmount() != expectedTotal {
 		t.Errorf("Expected total amount %d, got %d", expectedTotal, order.GetTotalAmount())
 	}
@@ -370,14 +377,14 @@ func TestOrder_IsEmpty(t *testing.T) {
 		t.Error("Expected new order to be empty")
 	}
 
-	pack, _ := NewPack(uuid.New(), 250)
-	_ = order.AddItem(pack, 1)
+	packageSize := 250
+	_ = order.AddItem(packageSize, 1)
 
 	if order.IsEmpty() {
 		t.Error("Expected order to not be empty after adding item")
 	}
 
-	_ = order.RemoveItem(pack.ID())
+	_ = order.RemoveItem(packageSize)
 
 	if !order.IsEmpty() {
 		t.Error("Expected order to be empty after removing all items")
@@ -386,11 +393,11 @@ func TestOrder_IsEmpty(t *testing.T) {
 
 func TestOrder_Clear(t *testing.T) {
 	order := NewOrder(uuid.New())
-	pack1, _ := NewPack(uuid.New(), 250)
-	pack2, _ := NewPack(uuid.New(), 500)
+	packageSize1 := 250
+	packageSize2 := 500
 
-	_ = order.AddItem(pack1, 2)
-	_ = order.AddItem(pack2, 1)
+	_ = order.AddItem(packageSize1, 2)
+	_ = order.AddItem(packageSize2, 1)
 
 	if order.IsEmpty() {
 		t.Error("Expected order to have items before clearing")
@@ -417,38 +424,45 @@ func TestOrder_Clear(t *testing.T) {
 }
 
 func TestNewOrderItem(t *testing.T) {
-	pack, _ := NewPack(uuid.New(), 250)
+	packageSize := 250
 
 	tests := []struct {
 		name        string
-		pack        *Pack
+		packageSize int
 		quantity    int
 		expectError bool
 		expectedErr error
 	}{
 		{
 			name:        "Valid order item creation",
-			pack:        pack,
+			packageSize: packageSize,
 			quantity:    2,
 			expectError: false,
 		},
 		{
-			name:        "Invalid order item with nil pack",
-			pack:        nil,
+			name:        "Invalid order item with zero package size",
+			packageSize: 0,
+			quantity:    1,
+			expectError: true,
+			expectedErr: ErrPackSize,
+		},
+		{
+			name:        "Invalid order item with negative package size",
+			packageSize: -250,
 			quantity:    1,
 			expectError: true,
 			expectedErr: ErrPackSize,
 		},
 		{
 			name:        "Invalid order item with zero quantity",
-			pack:        pack,
+			packageSize: packageSize,
 			quantity:    0,
 			expectError: true,
 			expectedErr: ErrInvalidQuantity,
 		},
 		{
 			name:        "Invalid order item with negative quantity",
-			pack:        pack,
+			packageSize: packageSize,
 			quantity:    -1,
 			expectError: true,
 			expectedErr: ErrInvalidQuantity,
@@ -457,7 +471,7 @@ func TestNewOrderItem(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			item, err := NewOrderItem(tt.pack, tt.quantity)
+			item, err := NewOrderItem(tt.packageSize, tt.quantity)
 
 			if tt.expectError {
 				if err == nil {
@@ -483,8 +497,8 @@ func TestNewOrderItem(t *testing.T) {
 				return
 			}
 
-			if item.Pack().ID() != tt.pack.ID() {
-				t.Errorf("Expected pack ID %s, got %s", tt.pack.ID(), item.Pack().ID())
+			if item.PackageSize() != tt.packageSize {
+				t.Errorf("Expected package size %d, got %d", tt.packageSize, item.PackageSize())
 			}
 
 			if item.Quantity() != tt.quantity {
@@ -494,19 +508,19 @@ func TestNewOrderItem(t *testing.T) {
 	}
 }
 
-func TestOrderItem_Pack(t *testing.T) {
-	pack, _ := NewPack(uuid.New(), 250)
-	item, _ := NewOrderItem(pack, 2)
+func TestOrderItem_PackageSize(t *testing.T) {
+	packageSize := 250
+	item, _ := NewOrderItem(packageSize, 2)
 
-	if item.Pack().ID() != pack.ID() {
-		t.Errorf("Expected pack ID %s, got %s", pack.ID(), item.Pack().ID())
+	if item.PackageSize() != packageSize {
+		t.Errorf("Expected package size %d, got %d", packageSize, item.PackageSize())
 	}
 }
 
 func TestOrderItem_Quantity(t *testing.T) {
-	pack, _ := NewPack(uuid.New(), 250)
+	packageSize := 250
 	quantity := 3
-	item, _ := NewOrderItem(pack, quantity)
+	item, _ := NewOrderItem(packageSize, quantity)
 
 	if item.Quantity() != quantity {
 		t.Errorf("Expected quantity %d, got %d", quantity, item.Quantity())
@@ -514,8 +528,8 @@ func TestOrderItem_Quantity(t *testing.T) {
 }
 
 func TestOrderItem_SetQuantity(t *testing.T) {
-	pack, _ := NewPack(uuid.New(), 250)
-	item, _ := NewOrderItem(pack, 2)
+	packageSize := 250
+	item, _ := NewOrderItem(packageSize, 2)
 
 	tests := []struct {
 		name        string
@@ -544,7 +558,7 @@ func TestOrderItem_SetQuantity(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			item, _ = NewOrderItem(pack, 2)
+			item, _ = NewOrderItem(packageSize, 2)
 			originalQuantity := item.Quantity()
 
 			err := item.SetQuantity(tt.quantity)
@@ -576,11 +590,11 @@ func TestOrderItem_SetQuantity(t *testing.T) {
 }
 
 func TestOrderItem_GetAmount(t *testing.T) {
-	pack, _ := NewPack(uuid.New(), 250)
+	packageSize := 250
 	quantity := 3
-	item, _ := NewOrderItem(pack, quantity)
+	item, _ := NewOrderItem(packageSize, quantity)
 
-	expectedAmount := 750
+	expectedAmount := 750 // 250 * 3
 	if item.GetAmount() != expectedAmount {
 		t.Errorf("Expected amount %d, got %d", expectedAmount, item.GetAmount())
 	}
@@ -588,27 +602,27 @@ func TestOrderItem_GetAmount(t *testing.T) {
 
 func TestOrder_Integration(t *testing.T) {
 	order := NewOrder(uuid.New())
-	pack1, _ := NewPack(uuid.New(), 250)
-	pack2, _ := NewPack(uuid.New(), 500)
-	pack3, _ := NewPack(uuid.New(), 1000)
+	packageSize1 := 250
+	packageSize2 := 500
+	packageSize3 := 1000
 
-	_ = order.AddItem(pack1, 2)
-	_ = order.AddItem(pack2, 1)
-	_ = order.AddItem(pack3, 1)
+	_ = order.AddItem(packageSize1, 2)
+	_ = order.AddItem(packageSize2, 1)
+	_ = order.AddItem(packageSize3, 1)
 
-	expectedTotal := 2000
+	expectedTotal := 2000 // (250 * 2) + (500 * 1) + (1000 * 1)
 	if order.GetTotalAmount() != expectedTotal {
 		t.Errorf("Expected total amount %d, got %d", expectedTotal, order.GetTotalAmount())
 	}
 
-	_ = order.UpdateItemQuantity(pack1.ID(), 4)
-	expectedTotal = 2500
+	_ = order.UpdateItemQuantity(packageSize1, 4)
+	expectedTotal = 2500 // (250 * 4) + (500 * 1) + (1000 * 1)
 	if order.GetTotalAmount() != expectedTotal {
 		t.Errorf("Expected total amount after update %d, got %d", expectedTotal, order.GetTotalAmount())
 	}
 
-	_ = order.RemoveItem(pack2.ID())
-	expectedTotal = 2000
+	_ = order.RemoveItem(packageSize2)
+	expectedTotal = 2000 // (250 * 4) + (1000 * 1)
 	if order.GetTotalAmount() != expectedTotal {
 		t.Errorf("Expected total amount after removal %d, got %d", expectedTotal, order.GetTotalAmount())
 	}

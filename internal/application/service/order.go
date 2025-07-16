@@ -46,10 +46,9 @@ type OrderResponse struct {
 
 // OrderItemResponse represents an order item in the response
 type OrderItemResponse struct {
-	PackID   uuid.UUID `json:"pack_id"`
-	PackSize int       `json:"pack_size"`
-	Quantity int       `json:"quantity"`
-	Amount   int       `json:"amount"`
+	PackSize int `json:"pack_size"`
+	Quantity int `json:"quantity"`
+	Amount   int `json:"amount"`
 }
 
 // CreateOrderFromCalculation creates an order from pack calculation
@@ -78,13 +77,12 @@ func (s *OrderService) CreateOrderFromCalculation(ctx context.Context, req Order
 		}
 
 		if pack != nil {
-			err := order.AddItem(pack, quantity)
+			err := order.AddItem(pack.Size(), quantity)
 			if err != nil {
 				return nil, fmt.Errorf("failed to add item to order: %w", err)
 			}
 
 			items = append(items, OrderItemResponse{
-				PackID:   pack.ID(),
 				PackSize: pack.Size(),
 				Quantity: quantity,
 				Amount:   pack.Size() * quantity,
@@ -128,15 +126,13 @@ func (s *OrderService) GetOrder(ctx context.Context, id uuid.UUID) (*OrderRespon
 	totalAmount := 0
 
 	for _, item := range items {
-		pack := item.Pack()
 		itemResponses = append(itemResponses, OrderItemResponse{
-			PackID:   pack.ID(),
-			PackSize: pack.Size(),
+			PackSize: item.PackageSize(),
 			Quantity: item.Quantity(),
 			Amount:   item.GetAmount(),
 		})
 
-		combination[pack.Size()] = item.Quantity()
+		combination[item.PackageSize()] = item.Quantity()
 		totalPacks += item.Quantity()
 		totalAmount += item.GetAmount()
 	}

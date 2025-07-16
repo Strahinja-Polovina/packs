@@ -14,16 +14,14 @@ import (
 )
 
 type orderPostgres struct {
-	db       *sqlx.DB
-	packRepo repository.PackRepository
-	logger   *logger.Logger
+	db     *sqlx.DB
+	logger *logger.Logger
 }
 
-func NewOrderPostgres(db *sqlx.DB, packRepo repository.PackRepository, logger *logger.Logger) repository.OrderRepository {
+func NewOrderPostgres(db *sqlx.DB, logger *logger.Logger) repository.OrderRepository {
 	return &orderPostgres{
-		db:       db,
-		packRepo: packRepo,
-		logger:   logger,
+		db:     db,
+		logger: logger,
 	}
 }
 
@@ -127,9 +125,9 @@ func (r *orderPostgres) Create(ctx context.Context, order *entity.Order) error {
 	items := order.GetItems()
 	r.logger.Debug("Creating %d order items for order %s", len(items), order.ID())
 	for _, item := range items {
-		itemQuery := `INSERT INTO order_items (order_id, pack_id, quantity, created_at, updated_at) 
+		itemQuery := `INSERT INTO order_items (order_id, package_size, quantity, created_at, updated_at) 
 					  VALUES ($1, $2, $3, $4, $5)`
-		_, err = tx.ExecContext(ctx, itemQuery, order.ID(), item.Pack().ID(), item.Quantity(),
+		_, err = tx.ExecContext(ctx, itemQuery, order.ID(), item.PackageSize(), item.Quantity(),
 			order.CreatedAt(), order.UpdatedAt())
 		if err != nil {
 			r.logger.Error("Failed to create order item for order %s: %v", order.ID(), err)
@@ -147,7 +145,7 @@ func (r *orderPostgres) Create(ctx context.Context, order *entity.Order) error {
 }
 
 func (r *orderPostgres) loadOrderItems(ctx context.Context, order *entity.Order) error {
-	query := `SELECT pack_id, quantity FROM order_items WHERE order_id = $1`
+	query := `SELECT package_size, quantity FROM order_items WHERE order_id = $1`
 	rows, err := r.db.QueryContext(ctx, query, order.ID())
 	if err != nil {
 		return fmt.Errorf("failed to query order items: %w", err)
@@ -157,21 +155,15 @@ func (r *orderPostgres) loadOrderItems(ctx context.Context, order *entity.Order)
 	}()
 
 	for rows.Next() {
-		var packID uuid.UUID
+		var packageSize int
 		var quantity int
 
-		if err := rows.Scan(&packID, &quantity); err != nil {
+		if err := rows.Scan(&packageSize, &quantity); err != nil {
 			r.logger.Error("Failed to scan order item for order %s: %v", order.ID(), err)
 			return fmt.Errorf("failed to scan order item: %w", err)
 		}
 
-		pack, err := r.packRepo.Get(ctx, packID)
-		if err != nil {
-			r.logger.Error("Failed to get pack %s for order %s: %v", packID, order.ID(), err)
-			return fmt.Errorf("failed to get pack: %w", err)
-		}
-
-		if err := order.AddItem(pack, quantity); err != nil {
+		if err := order.AddItem(packageSize, quantity); err != nil {
 			r.logger.Error("Failed to add item to order %s: %v", order.ID(), err)
 			return fmt.Errorf("failed to add item to order: %w", err)
 		}

@@ -341,9 +341,6 @@ const docTemplate = `{
                 "amount": {
                     "type": "integer"
                 },
-                "pack_id": {
-                    "type": "string"
-                },
                 "pack_size": {
                     "type": "integer"
                 },

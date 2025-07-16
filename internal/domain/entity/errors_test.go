@@ -125,40 +125,40 @@ func TestPackSizeErrorUsage(t *testing.T) {
 
 func TestInvalidQuantityErrorUsage(t *testing.T) {
 	order := NewOrder(uuid.New())
-	pack, _ := NewPack(uuid.New(), 250)
+	packageSize := 250
 
-	err := order.AddItem(pack, 0)
+	err := order.AddItem(packageSize, 0)
 	if !errors.Is(err, ErrInvalidQuantity) {
 		t.Errorf("Expected ErrInvalidQuantity when adding item with quantity 0, got %v", err)
 	}
 
-	err = order.AddItem(pack, -1)
+	err = order.AddItem(packageSize, -1)
 	if !errors.Is(err, ErrInvalidQuantity) {
 		t.Errorf("Expected ErrInvalidQuantity when adding item with negative quantity, got %v", err)
 	}
 
-	_ = order.AddItem(pack, 1)
-	err = order.UpdateItemQuantity(pack.ID(), 0)
+	_ = order.AddItem(packageSize, 1)
+	err = order.UpdateItemQuantity(packageSize, 0)
 	if !errors.Is(err, ErrInvalidQuantity) {
 		t.Errorf("Expected ErrInvalidQuantity when updating item quantity to 0, got %v", err)
 	}
 
-	err = order.UpdateItemQuantity(pack.ID(), -1)
+	err = order.UpdateItemQuantity(packageSize, -1)
 	if !errors.Is(err, ErrInvalidQuantity) {
 		t.Errorf("Expected ErrInvalidQuantity when updating item quantity to negative, got %v", err)
 	}
 
-	_, err = NewOrderItem(pack, 0)
+	_, err = NewOrderItem(packageSize, 0)
 	if !errors.Is(err, ErrInvalidQuantity) {
 		t.Errorf("Expected ErrInvalidQuantity when creating order item with quantity 0, got %v", err)
 	}
 
-	_, err = NewOrderItem(pack, -1)
+	_, err = NewOrderItem(packageSize, -1)
 	if !errors.Is(err, ErrInvalidQuantity) {
 		t.Errorf("Expected ErrInvalidQuantity when creating order item with negative quantity, got %v", err)
 	}
 
-	item, _ := NewOrderItem(pack, 1)
+	item, _ := NewOrderItem(packageSize, 1)
 	err = item.SetQuantity(0)
 	if !errors.Is(err, ErrInvalidQuantity) {
 		t.Errorf("Expected ErrInvalidQuantity when setting order item quantity to 0, got %v", err)
@@ -172,29 +172,39 @@ func TestInvalidQuantityErrorUsage(t *testing.T) {
 
 func TestOrderNotFoundErrorUsage(t *testing.T) {
 	order := NewOrder(uuid.New())
-	nonExistentID := uuid.New()
+	nonExistentPackageSize := 999
 
-	err := order.RemoveItem(nonExistentID)
+	err := order.RemoveItem(nonExistentPackageSize)
 	if !errors.Is(err, ErrOrderNotFound) {
 		t.Errorf("Expected ErrOrderNotFound when removing non-existent item, got %v", err)
 	}
 
-	err = order.UpdateItemQuantity(nonExistentID, 1)
+	err = order.UpdateItemQuantity(nonExistentPackageSize, 1)
 	if !errors.Is(err, ErrOrderNotFound) {
 		t.Errorf("Expected ErrOrderNotFound when updating non-existent item quantity, got %v", err)
 	}
 }
 
-func TestPackSizeErrorForNilPack(t *testing.T) {
+func TestPackSizeErrorForInvalidPackageSize(t *testing.T) {
 	order := NewOrder(uuid.New())
 
-	err := order.AddItem(nil, 1)
+	err := order.AddItem(0, 1)
 	if !errors.Is(err, ErrPackSize) {
-		t.Errorf("Expected ErrPackSize when adding nil pack to order, got %v", err)
+		t.Errorf("Expected ErrPackSize when adding zero package size to order, got %v", err)
 	}
 
-	_, err = NewOrderItem(nil, 1)
+	_, err = NewOrderItem(0, 1)
 	if !errors.Is(err, ErrPackSize) {
-		t.Errorf("Expected ErrPackSize when creating order item with nil pack, got %v", err)
+		t.Errorf("Expected ErrPackSize when creating order item with zero package size, got %v", err)
+	}
+
+	err = order.AddItem(-250, 1)
+	if !errors.Is(err, ErrPackSize) {
+		t.Errorf("Expected ErrPackSize when adding negative package size to order, got %v", err)
+	}
+
+	_, err = NewOrderItem(-250, 1)
+	if !errors.Is(err, ErrPackSize) {
+		t.Errorf("Expected ErrPackSize when creating order item with negative package size, got %v", err)
 	}
 }
