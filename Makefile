@@ -1,4 +1,4 @@
-.PHONY: help build run test clean migrate-up migrate-down migrate-status docker-build docker-run docker-compose-up docker-compose-down swagger templ-generate up
+.PHONY: help build run test clean migrate-up migrate-down migrate-status docker-build docker-run docker-compose-up docker-compose-down swagger templ-generate up install-deps install-dev-deps
 
 # Default target
 help: ## Show this help message
@@ -94,15 +94,17 @@ docker-compose-logs: ## View docker-compose logs
 	docker-compose logs -f
 
 # Complete development setup and start all services
-up: ## Generate templates, swagger, prepare everything, and start all services with docker-compose
+up: ## Install dependencies, generate templates, swagger, prepare everything, and start all services with docker-compose
 	@echo "Preparing application for deployment..."
-	@echo "1. Tidying Go modules..."
+	@echo "1. Installing dependencies..."
+	@$(MAKE) install-deps
+	@echo "2. Tidying Go modules..."
 	go mod tidy
-	@echo "2. Generating templ templates..."
+	@echo "3. Generating templ templates..."
 	templ generate
-	@echo "3. Generating swagger documentation..."
+	@echo "4. Generating swagger documentation..."
 	swag init -g cmd/api/main.go
-	@echo "4. Starting all services with docker-compose..."
+	@echo "5. Starting all services with docker-compose..."
 	docker compose up --build -d
 	@echo "✅ All services started successfully!"
 	@echo "📖 API documentation: http://localhost:8080/swagger/index.html"
@@ -110,10 +112,21 @@ up: ## Generate templates, swagger, prepare everything, and start all services w
 	@echo "🏥 Health check: http://localhost:8080/health"
 	@echo "📊 View logs: make docker-compose-logs"
 
-# Install development dependencies
-install-dev-deps: ## Install development dependencies
-	@echo "Installing development dependencies..."
+# Install all dependencies
+install-deps: ## Install all required dependencies
+	@echo "Installing all dependencies..."
+	@echo "Installing goose..."
 	go install github.com/pressly/goose/v3/cmd/goose@latest
+	@echo "Installing templ..."
+	go install github.com/a-h/templ/cmd/templ@latest
+	@echo "Installing swag..."
+	go install github.com/swaggo/swag/cmd/swag@latest
+	@echo "Installing golangci-lint..."
+	go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+	@echo "All dependencies installed successfully!"
+
+# Install development dependencies (legacy alias)
+install-dev-deps: install-deps ## Install development dependencies (alias for install-deps)
 
 # Format code
 fmt: ## Format Go code
@@ -121,13 +134,13 @@ fmt: ## Format Go code
 	go fmt ./...
 
 # Lint code
-lint: ## Lint Go code (requires golangci-lint)
+lint: ## Lint Go code (installs golangci-lint if needed)
 	@echo "Linting code..."
-	@if command -v golangci-lint > /dev/null; then \
-		golangci-lint run; \
-	else \
-		echo "golangci-lint not found. Install with: go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest"; \
+	@if ! command -v golangci-lint > /dev/null; then \
+		echo "golangci-lint not found. Installing..."; \
+		go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest; \
 	fi
+	golangci-lint run
 
 # Tidy dependencies
 tidy: ## Tidy Go modules
@@ -163,7 +176,7 @@ env-setup: ## Setup environment file
 	fi
 
 # Full setup for new developers
-setup: env-setup install-dev-deps db-setup ## Full setup for new developers
+setup: env-setup install-deps db-setup ## Full setup for new developers
 	@echo "Setup complete! Next steps:"
 	@echo "1. Update .env file with your database credentials"
 	@echo "2. Create PostgreSQL database 'packs_db'"
